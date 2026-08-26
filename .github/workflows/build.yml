@@ -1,7 +1,5 @@
 name: Build Android APK
-on:
-  push:
-    branches: [ "main" ]
+on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -11,16 +9,16 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-      - name: Create Android Project
+      - name: Make Project
         run: |
           mkdir -p app/src/main/java/com/paper/calendar
           mkdir -p app/src/main/assets
           cat > app/src/main/java/com/paper/calendar/MainActivity.java << 'EOF'
           package com.paper.calendar;
-          import android.app.Activity; import android.os.Bundle; import android.webkit.WebView; import android.webkit.WebSettings;
+          import android.app.Activity; import android.os.Bundle; import android.webkit.WebView;
           public class MainActivity extends Activity {
-            protected void onCreate(Bundle savedInstanceState) {
-              super.onCreate(savedInstanceState);
+            protected void onCreate(Bundle b) {
+              super.onCreate(b);
               WebView wv = new WebView(this);
               wv.getSettings().setJavaScriptEnabled(true);
               wv.getSettings().setDomStorageEnabled(true);
@@ -31,21 +29,32 @@ jobs:
           EOF
           cat > app/src/main/AndroidManifest.xml << 'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.paper.calendar">
-            <application android:label="Paper Calendar"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application>
+            <application android:label="PaperCalendar"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application>
           </manifest>
           EOF
           cat > app/build.gradle << 'EOF'
-          apply plugin: 'com.android.application'
-          android { compileSdkVersion 34; defaultConfig { applicationId "com.paper.calendar"; minSdkVersion 21; targetSdkVersion 34; versionCode 1; versionName "1.0" } }
+          plugins { id 'com.android.application' }
+          android {
+            namespace 'com.paper.calendar'
+            compileSdk 34
+            defaultConfig { applicationId "com.paper.calendar"; minSdk 21; targetSdk 34; versionCode 1; versionName "1.0" }
+          }
+          EOF
+          cat > build.gradle << 'EOF'
+          buildscript {
+            repositories { google(); mavenCentral() }
+            dependencies { classpath 'com.android.tools.build:gradle:8.2.2' }
+          }
+          allprojects { repositories { google(); mavenCentral() } }
           EOF
           echo "include ':app'" > settings.gradle
           cp index.html app/src/main/assets/index.html
-      - name: Build APK
+      - name: Build
         uses: gradle/gradle-build-action@v3
         with:
           gradle-version: 8.5
           arguments: assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: PaperCalendar-APK
+          name: PaperCalendar-Fixed
           path: app/build/outputs/apk/debug/app-debug.apk
