@@ -12,17 +12,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Locate and Extract Zip
+      - name: Extract Zip
         run: |
-          echo "=== Files in Repository ==="
-          ls -la
-          
           ZIP_FILE=$(find . -maxdepth 2 -name "*.zip" | head -n 1)
           if [ -n "$ZIP_FILE" ]; then
-            echo "Unzipping $ZIP_FILE..."
             unzip -o "$ZIP_FILE"
-          else
-            echo "No zip file found!"
           fi
 
       - name: Setup JDK 17
@@ -31,21 +25,17 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Find and Build APK
+      - name: Build APK using Installed Gradle
         run: |
-          GRADLEW_PATH=$(find . -name "gradlew" | head -n 1)
-          if [ -z "$GRADLEW_PATH" ]; then
-            echo "gradlew not found anywhere in repo!"
+          BUILD_FILE=$(find . -name "build.gradle" -o -name "build.gradle.kts" | head -n 1)
+          if [ -z "$BUILD_FILE" ]; then
+            echo "No build.gradle file found!"
             exit 1
           fi
-          PROJECT_DIR=$(dirname "$GRADLEW_PATH")
+          PROJECT_DIR=$(dirname "$BUILD_FILE")
           echo "Building in directory: $PROJECT_DIR"
           cd "$PROJECT_DIR"
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          gradle assembleDebug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
