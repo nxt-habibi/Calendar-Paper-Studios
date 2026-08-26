@@ -12,11 +12,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Unzip Android Project
+      - name: Extract Project Files
         run: |
           unzip -o PaperStudiosCalendar_Android.zip
-          if [ -d "PaperStudiosCalendar_Android" ]; then
-            cp -r PaperStudiosCalendar_Android/* .
+          # If files were unzipped into a subfolder, move them to the root
+          SUBDIR=$(find . -maxdepth 2 -name "gradlew" -exec dirname {} \;)
+          if [ -n "$SUBDIR" ] && [ "$SUBDIR" != "." ]; then
+            cp -r $SUBDIR/* .
           fi
 
       - name: Setup JDK 17
@@ -29,7 +31,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Make gradlew executable
-        run: chmod +x gradlew || true
+        run: chmod +x gradlew
 
       - name: Build APK
         run: ./gradlew assembleDebug
