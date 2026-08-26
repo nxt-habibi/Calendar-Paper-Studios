@@ -1,0 +1,204 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#a78bfa"><title>Calendar — Paper Studios</title>
+<link id="fav" rel="icon" href=""><link id="manifestLink" rel="manifest" href="">
+<style>
+:root{--accent:#a78bfa;--bg:#0e0e12;--card:#1c1c24;--card2:#2a2a36;--sheet:#20202a;--input:#16161e;--border:#2e2e3c;--border2:#2b2b35;--text:#fff;--text-dim:#9a9aa5;--font:system-ui,-apple-system,sans-serif}
+body.light{--bg:#f4f4f7;--card:#fff;--card2:#eef0f5;--sheet:#fff;--input:#f0f1f5;--border:#e2e4ea;--border2:#e6e8ee;--text:#14141a;--text-dim:#6b6b76}
+*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;flex-direction:column;transition:.3s;position:relative}
+body.astro{background-size:200% 200%;animation:nebulaShift 20s ease-in-out infinite alternate}body.astro.customBgActive{animation:none;background-size:cover;background-position:center}
+@keyframes nebulaShift{from{background-position:0 0}to{background-position:100% 100%}}
+@keyframes splashOut{to{opacity:0;visibility:hidden;pointer-events:none}}
+@keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-9deg)}80%{transform:rotate(6deg)}}
+#splash{position:fixed;inset:0;background:var(--bg);z-index:9999;display:grid;place-items:center;text-align:center}
+#splash.hide{animation:splashOut .45s ease forwards}.splashTitle{font-size:30px;font-weight:800}.splashSub{margin-top:5px;color:var(--text-dim);font-size:14px}
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none;display:none}body.astro #stars{display:block}
+
+/* Water Ripple Effect */
+.ripple{position:absolute;border-radius:50%;transform:scale(0);animation:rippleEffect .6s linear;background:rgba(255,255,255,0.3);pointer-events:none}
+@keyframes rippleEffect{to{transform:scale(4);opacity:0}}
+
+.top{padding:12px 14px 6px;display:flex;gap:8px;align-items:center;position:relative;z-index:2}.top h1{font-size:22px}
+.search{flex:1;background:var(--card);border:1px solid var(--border2);border-radius:999px;padding:10px 14px;color:var(--text);outline:0;font-family:var(--font)}
+.iconBtn{width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--border2);color:var(--text);font-size:20px;display:grid;place-items:center;cursor:pointer;position:relative;overflow:hidden}
+.scroller{flex:1;overflow-y:auto;position:relative;z-index:1}.monthBlock{padding:0 10px 12px}
+.monthLabel{position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 70%,transparent);padding:10px 6px;font-size:22px;font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.dName{text-align:center;color:var(--accent);font-size:10px;padding:4px}
+.day{aspect-ratio:1;border-radius:14px;background:var(--card);display:grid;place-items:center;font-size:14px;font-weight:700;position:relative;cursor:pointer;overflow:hidden}.day.today{background:var(--accent);color:#000}.day.sel{outline:2px solid var(--accent);outline-offset:2px}
+.dots{position:absolute;bottom:3px;display:flex;gap:2px}.dot{width:4px;height:4px;border-radius:50%}
+.btn{border:0;border-radius:999px;padding:10px 14px;font-weight:700;cursor:pointer;position:relative;overflow:hidden}.btnPri{background:var(--accent);color:#000}
+.fab{position:fixed;right:14px;bottom:14px;width:56px;height:56px;border-radius:18px;background:var(--accent);color:#000;border:0;font-size:26px;z-index:10;cursor:pointer;overflow:hidden}
+.modal{position:fixed;inset:0;background:#000b;display:none;place-items:center;z-index:40;padding:14px}.modal.open{display:grid}
+.sheet{background:var(--sheet);color:var(--text);border-radius:24px;padding:16px;width:min(400px,96vw);border:1px solid var(--border);max-height:92vh;overflow:auto}
+.input{background:var(--input);border:1px solid var(--border);border-radius:12px;padding:10px 12px;color:var(--text);width:100%;outline:0;margin:5px 0;font-family:var(--font)}
+.result{padding:8px 14px;border-bottom:1px solid var(--border2);cursor:pointer}.dayHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.closeX{background:none;border:0;color:var(--text-dim);font-size:20px;cursor:pointer}.sectionTitle{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);font-weight:700;margin:16px 0 6px}
+.dotSwatch{width:18px;height:18px;min-width:18px;border-radius:50%;display:inline-block;border:2px solid #ffffff33}
+.accentRow,.relRow,.toolRow{display:flex;align-items:center;gap:10px;padding:10px 4px;cursor:pointer}.relRow,.toolRow{border-bottom:1px solid var(--border2)}
+.fontList{max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:12px;margin-top:8px}.fontOption{padding:12px 14px;font-size:17px;border-bottom:1px solid var(--border2);cursor:pointer}.fontOption.active{background:var(--accent);color:#000}
+#hueSlider{width:100%;height:16px;border-radius:999px;background:linear-gradient(to right,red,#ff0,#0f0,#0ff,#00f,#f0f,red);margin:14px 0}
+.switchRow{display:flex;align-items:center;gap:10px;padding:10px 4px}.switch{position:relative;width:46px;height:26px}.switch input{opacity:0}.slider{position:absolute;inset:0;background:var(--card2);border-radius:999px}.slider:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}input:checked+.slider{background:var(--accent)}input:checked+.slider:before{transform:translateX(20px)}
+.spaceRow{display:flex;gap:8px;overflow-x:auto;padding:6px 0}.spaceSwatch,.galleryBtn{width:52px;height:52px;min-width:52px;border-radius:14px;cursor:pointer}.spaceSwatch{border:2px solid transparent;background-size:200% 200%;animation:nebulaShift 6s ease-in-out infinite alternate}.spaceSwatch.active{border-color:var(--accent)}.galleryBtn{display:grid;place-items:center;background:var(--card2);border:2px dashed var(--border);font-size:18px}.bell{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--card2);font-size:19px}.bell.shake{animation:shake .5s ease}.status{font-size:11px;color:var(--text-dim);line-height:1.45;margin-top:7px}
+</style></head><body>
+<div id="splash"><div><div class="splashTitle">Calendar</div><div class="splashSub">by Paper Studios</div></div></div>
+<canvas id="stars"></canvas>
+<div class="top"><h1>Calendar</h1><input class="search" id="searchBox" placeholder="Search" oninput="doSearch(this.value)"><button class="iconBtn" onclick="openMore()">⋮</button></div>
+<div id="searchResults" style="display:none;background:var(--card);margin:0 14px;border-radius:14px;max-height:40vh;overflow:auto;position:relative"></div>
+<div class="scroller" id="scroller"></div><button class="fab" onclick="openAddEvent()">+</button>
+
+<div class="modal" id="dayM" onclick="if(event.target==this)closeDayDetail()"><div class="sheet"><div class="dayHeader"><div><div style="color:var(--accent);font-size:11px;font-weight:700" id="dayLab">Today</div><h3 id="dayTxt"></h3></div><button class="closeX" onclick="closeDayDetail()">✕</button></div><div id="dayTags"></div><div id="dayEvents"></div><button class="btn btnPri" style="width:100%;margin-top:14px" onclick="openAddEvent()">+ Add Event</button></div></div>
+
+<div class="modal" id="moreM" onclick="if(event.target==this)closeMore()"><div class="sheet">
+<div class="dayHeader"><h3>More</h3><button class="closeX" onclick="closeMore()">✕</button></div>
+<div class="sectionTitle">Appearance</div><div class="switchRow"><label class="switch"><input type="checkbox" id="themeToggle" onchange="toggleTheme(this.checked)"><span class="slider"></span></label><span>Light Mode</span></div>
+<div class="accentRow" onclick="openColorPicker('accent')"><span class="dotSwatch" id="accentSwatch"></span><span style="flex:1">Theme Color</span>›</div>
+<div style="margin-top:10px"><span class="status">Space Background (Dark Mode)</span><div class="spaceRow" id="spaceThemeRow"></div><input type="file" id="bgGalleryFile" accept="image/*" hidden onchange="handleGalleryFile(event)"></div>
+<div style="margin-top:10px"><span class="status">Font — </span><b id="curFontName"></b><input class="input" id="fontSearch" placeholder="Search 150+ fonts" oninput="renderFontList(this.value)"><div class="fontList" id="fontList"></div></div>
+<div class="sectionTitle">Holidays & Observances</div><div id="relDotsList"></div>
+<div class="sectionTitle">Tools</div>
+<div class="toolRow" onclick="closeMore();openDial()"><span style="flex:1">Jump to Date</span>›</div>
+<div class="toolRow" onclick="document.getElementById('icsFile').click()"><span style="flex:1">Import Google (.ics)</span>›</div>
+<div class="toolRow" onclick="requestNotif()"><span class="bell" id="notifBell">🔔</span><span style="flex:1">Enable Notifications</span>›</div>
+<div class="toolRow" onclick="openAppIconPicker()"><span style="flex:1">Play Store Icon</span>›</div><input type="file" id="icsFile" accept=".ics" hidden onchange="importICS(event)">
+<div class="sectionTitle">Help</div><div class="toolRow" onclick="closeMore();window.open(PLAYSTORE_URL,'_blank')"><span style="flex:1">Rate Us</span>›</div><div class="toolRow" onclick="sendFeedback()"><span style="flex:1">Feedback</span>›</div><div class="toolRow" onclick="closeMore();openPrivacy()"><span style="flex:1">Privacy Policy</span>›</div>
+</div></div>
+
+<div class="modal" id="privacyM" onclick="if(event.target==this)closePrivacy()"><div class="sheet"><div class="dayHeader"><h3>Privacy Policy</h3><button class="closeX" onclick="closePrivacy()">✕</button></div><div style="font-size:13px;line-height:1.6;color:var(--text-dim);margin-top:10px"><b style="color:var(--text)">Calendar</b><p>Made by Paper Studios.</p><p>Events, reminders, colors, fonts and backgrounds are stored locally on this device. The app does not send them to a server.</p><p>Notifications work while the app is running in this standalone HTML version.</p><p>Contact: <span id="pvEmail"></span></p><p>Play Store: <span id="pvStore"></span></p></div><button class="btn btnPri" style="width:100%;margin-top:14px" onclick="closePrivacy()">Close</button></div></div>
+
+<div class="modal" id="colorM" onclick="if(event.target==this)closeColorPicker(true)"><div class="sheet"><h3 id="colorMTitle">Choose Color</h3><input type="range" id="hueSlider" min="0" max="360" value="270" oninput="updateHuePreview(this.value)"><div style="display:flex;gap:12px;align-items:center"><div id="colorPreview" style="width:46px;height:46px;border-radius:50%"></div><b id="colorHex"></b></div><div style="display:flex;gap:8px;margin-top:14px"><button class="btn" style="flex:1;background:var(--card2);color:var(--text)" onclick="closeColorPicker(true)">Cancel</button><button class="btn btnPri" style="flex:1" onclick="confirmColorPicker()">Done</button></div></div></div>
+
+<div class="modal" id="dialM" onclick="if(event.target==this)closeDial()"><div class="sheet"><h3>Jump to Date</h3><input class="input" id="jumpDateInput" type="date"><div style="display:flex;gap:8px;margin-top:14px"><button class="btn" style="flex:1;background:var(--card2);color:var(--text)" onclick="closeDial()">Cancel</button><button class="btn btnPri" style="flex:1" onclick="confirmDial()">Go</button></div></div></div>
+
+<div class="modal" id="eventM" onclick="if(event.target==this)closeAddEvent()"><div class="sheet"><div class="dayHeader"><h3>Add Event</h3><button class="bell" id="eventBell">🔔</button></div><input class="input" id="evDate" type="date"><input class="input" id="evTime" type="time" value="09:00"><input class="input" id="evName" placeholder="Event name"><label class="btn" style="background:var(--input);display:block;color:var(--text)"><input type="color" id="evColor" value="#a78bfa"> Color</label><div style="display:flex;gap:6px"><select class="input" id="evRemind"><option value="1440">1 day before</option><option value="60">1 hr before</option><option value="0">No reminder</option></select><label class="btn" style="background:var(--input);color:var(--text)"><input type="checkbox" id="evYearly" checked> Yearly</label></div><div class="status">Reminders are checked while the app is running.</div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" style="flex:1;background:var(--card2);color:var(--text)" onclick="closeAddEvent()">Cancel</button><button class="btn btnPri" style="flex:1" onclick="saveEvent()">Save</button></div></div></div>
+
+<div class="modal" id="iconM" onclick="if(event.target==this)closeAppIconPicker()"><div class="sheet"><div class="dayHeader"><h3>Play Store Icon</h3><button class="closeX" onclick="closeAppIconPicker()">✕</button></div><p class="status">Optional placeholder. Add your final launcher icon before publishing.</p><input class="input" id="iconFile" type="file" accept="image/png,image/jpeg,image/webp" onchange="previewAppIcon(event)"><div id="iconPreview" style="margin-top:10px;text-align:center"></div><button class="btn btnPri" style="width:100%;margin-top:14px" onclick="saveAppIcon()">Save Icon</button></div></div>
+
+<script>
+// Water Wave Ripple Effect Listener
+document.addEventListener("click", function(e){
+    let target = e.target.closest("button, .day, .toolRow, .relRow, .spaceSwatch, .fontOption");
+    if(!target) return;
+    let circle = document.createElement("span");
+    circle.className = "ripple";
+    let diameter = Math.max(target.clientWidth, target.clientHeight);
+    let radius = diameter / 2;
+    let rect = target.getBoundingClientRect();
+    circle.style.width = circle.style.height = `${diameter}px`;
+    circle.style.left = `${e.clientX - rect.left - radius}px`;
+    circle.style.top = `${e.clientY - rect.top - radius}px`;
+    target.appendChild(circle);
+    setTimeout(() => circle.remove(), 600);
+});
+
+const PLAYSTORE_URL="https://play.google.com/store/apps/details?id=YOUR_APP_ID_HERE",FEEDBACK_EMAIL="yourname@gmail.com";
+const DEFAULT_CATS={ih:"#ff6b35",io:"#4fc3f7",wh:"#ffd54f",wo:"#26c6da",personal:"#a78bfa"};
+let religionColors=JSON.parse(localStorage.getItem("relColors")||"{}");for(const k in DEFAULT_CATS)if(!religionColors[k])religionColors[k]=DEFAULT_CATS[k];
+const CATLABELS={ih:"Indian Holidays",io:"Indian Observances",wh:"World Holidays",wo:"World Observances",personal:"Personal"};
+let customEvents=JSON.parse(localStorage.getItem("calEvents")||"{}"),yearlyEvents=JSON.parse(localStorage.getItem("yearlyEvents")||"[]");
+const FIXED={"01-01":[["New Year","wh"]],"01-12":[["National Youth Day","io"]],"01-26":[["Republic Day","ih"]],"03-08":[["International Women's Day","wo"]],"04-22":[["Earth Day","wo"]],"05-01":[["Labour Day","io"]],"06-05":[["World Environment Day","wo"]],"06-21":[["International Yoga Day","wo"]],"08-15":[["Independence Day","ih"]],"08-29":[["National Sports Day","io"]],"09-05":[["Teachers' Day","io"]],"10-02":[["Gandhi Jayanti","ih"]],"10-24":[["United Nations Day","wo"]],"11-14":[["Children's Day","io"],["World Diabetes Day","wo"]],"11-26":[["Constitution Day","io"]],"12-01":[["World AIDS Day","wo"]],"12-25":[["Christmas","ih"]]};
+let holidayCache={};function buildYear(y){let m={};for(const k in FIXED)m[k]=FIXED[k].slice();if(y<1947)delete m["08-15"];if(y<1950)delete m["01-26"];return m}function getHols(y,m,d){if(!holidayCache[y])holidayCache[y]=buildYear(y);return (holidayCache[y][String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0")]||[]).map(h=>({name:h[0],religion:h[1]}))}
+function saveStore(){localStorage.setItem("relColors",JSON.stringify(religionColors));localStorage.setItem("calEvents",JSON.stringify(customEvents));localStorage.setItem("yearlyEvents",JSON.stringify(yearlyEvents))}
+const MIN_YEAR=1900,MAX_YEAR=2100;let today=new Date();today.setHours(0,0,0,0),selDate=new Date(today),holidaySearch=[];
+function doSearch(q){let box=document.getElementById("searchResults");q=q.trim();if(!q){box.style.display="none";return}box.style.display="block";box.innerHTML="";let out=[];for(const k in customEvents)for(const ev of customEvents[k])if(ev.name.toLowerCase().includes(q.toLowerCase())){let p=k.split("-").map(Number);out.push({t:"Event",txt:ev.name+" — "+new Date(p[0],p[1],p[2]).toDateString(),d:new Date(p[0],p[1],p[2])})}yearlyEvents.forEach(ev=>{if(ev.name.toLowerCase().includes(q.toLowerCase()))out.push({t:"Yearly",txt:ev.name,d:new Date(new Date().getFullYear(),ev.month,ev.day)})});let d=new Date(q);if(!isNaN(d)&&q.length>3)out.push({t:"Date",txt:d.toDateString(),d});if(!out.length)box.innerHTML='<div class="result">No results</div>';out.slice(0,20).forEach(x=>{let e=document.createElement("div");e.className="result";e.innerHTML="<b>"+x.t+"</b> — "+x.txt;e.onclick=()=>jumpTo(x.d);box.appendChild(e)})}
+function jumpTo(d){scroller.innerHTML="";for(let i=-4;i<=6;i++){let x=new Date(d.getFullYear(),d.getMonth()+i,1);if(x.getFullYear()>=MIN_YEAR&&x.getFullYear()<=MAX_YEAR)scroller.innerHTML+=monthHTML(x.getFullYear(),x.getMonth())}scroller.scrollTop=4*360;highlightDate(d.getFullYear(),d.getMonth(),d.getDate());document.getElementById("searchResults").style.display="none";document.getElementById("searchBox").value=""}
+function getAllEventsFor(y,m,d){let k=y+"-"+m+"-"+d,list=[...(customEvents[k]||[])];yearlyEvents.forEach((e,i)=>{if(e.month==m&&e.day==d)list.push({...e,_yearlyIndex:i})});return list}
+function monthHTML(y,m){let first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(),s='<div class="monthBlock"><div class="monthLabel">'+new Intl.DateTimeFormat("en",{month:"long",year:"numeric"}).format(new Date(y,m,1))+'</div><div class="grid">';["Su","Mo","Tu","We","Th","Fr","Sa"].forEach(x=>s+='<div class="dName">'+x+"</div>");for(let d=1;d<=days;d++){let hs=getHols(y,m,d),es=getAllEventsFor(y,m,d),date=new Date(y,m,d);s+='<div class="day '+(date.toDateString()==new Date().toDateString()?"today ":"")+(date.toDateString()==selDate.toDateString()?"sel":"")+'" data-date="'+y+"-"+m+"-"+d+'" onclick="openDayDetail('+y+","+m+","+d+')">'+d+'<span class="dots">'+hs.map(h=>'<i class="dot" style="background:'+religionColors[h.religion]+'"></i>').join("")+es.map(e=>'<i class="dot" style="background:'+e.color+';width:6px;height:6px"></i>').join("")+"</span></div>"}return s+"</div></div>"}
+const scroller=document.getElementById("scroller");function initScroll(){let h="";for(let i=-6;i<=14;i++){let d=new Date(selDate.getFullYear(),selDate.getMonth()+i,1);if(d.getFullYear()>=MIN_YEAR&&d.getFullYear()<=MAX_YEAR)h+=monthHTML(d.getFullYear(),d.getMonth())}scroller.innerHTML=h;setTimeout(()=>scroller.scrollTop=6*360,40)}
+function refresh(){initScroll()}
+function highlightDate(y,m,d){selDate=new Date(y,m,d);document.querySelectorAll(".day.sel").forEach(e=>e.classList.remove("sel"));let e=document.querySelector('[data-date="'+y+"-"+m+"-"+d+'"]');if(e)e.classList.add("sel")}
+function openDayDetail(y,m,d){highlightDate(y,m,d);let dt=selDate,fmt=new Intl.DateTimeFormat("en",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(dt);dayLab.textContent=fmt.split(",")[0];dayTxt.textContent=fmt;dayTags.innerHTML=getHols(y,m,d).map(h=>'<span class="tag">'+h.name+"</span>").join("");dayEvents.innerHTML="";getAllEventsFor(y,m,d).forEach((e,i)=>{let div=document.createElement("div");div.className="tag";div.style.borderLeft="3px solid "+e.color;div.textContent=e.name+" "+(e.time||"");let b=document.createElement("button");b.className="closeX";b.textContent="✕";b.onclick=()=>delEventAt(y,m,d,i);div.appendChild(b);dayEvents.appendChild(div)});dayM.classList.add("open")}
+function closeDayDetail(){dayM.classList.remove("open")}
+function openMore(){renderRelDots();renderSpaceThemes();renderFontList("");updateFontDisplay();syncAccentSwatch?.();document.getElementById("themeToggle").checked=document.body.classList.contains("light");document.getElementById("moreM").classList.add("open")}
+function closeMore(){document.getElementById("moreM").classList.remove("open")}
+function openDial(){jumpDateInput.value=selDate.toISOString().slice(0,10);dialM.classList.add("open")}function closeDial(){dialM.classList.remove("open")}function confirmDial(){let d=new Date(jumpDateInput.value+"T00:00:00");if(!isNaN(d))jumpTo(d);closeDial()}
+function openAddEvent(){closeMore();closeDayDetail();eventM.classList.add("open");evDate.value=selDate.toISOString().slice(0,10);evColor.value=religionColors.personal;updateReminderBell()}function closeAddEvent(){eventM.classList.remove("open")}
+function updateReminderBell(){eventBell.style.opacity=evRemind.value==="0"?".35":"1"}evRemind.onchange=updateReminderBell;
+function haptic(){try{if(navigator.vibrate)navigator.vibrate(50)}catch(e){}}function triggerBell(){[eventBell,notifBell].forEach(e=>{e.classList.remove("shake");void e.offsetWidth;e.classList.add("shake");setTimeout(()=>e.classList.remove("shake"),520)})}
+function saveEvent(){let d=new Date(evDate.value+"T00:00:00"),name=evName.value.trim();if(!name||isNaN(d))return;let e={name,color:evColor.value,time:evTime.value,remind:evRemind.value,type:"personal"};if(evYearly.checked)yearlyEvents.push({...e,month:d.getMonth(),day:d.getDate()});else{let k=d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate();(customEvents[k]||(customEvents[k]=[])).push(e)}saveStore();if(e.remind!=="0"){haptic();triggerBell()}closeAddEvent();refresh()}
+function delEventAt(y,m,d,i){let a=getAllEventsFor(y,m,d),e=a[i];if(!e)return;if(e._yearlyIndex!=null)yearlyEvents.splice(e._yearlyIndex,1);else{let k=y+"-"+m+"-"+d;let idx=customEvents[k].indexOf(e);if(idx<0)idx=customEvents[k].findIndex(x=>x.name===e.name&&x.time===e.time&&x.color===e.color);if(idx>=0)customEvents[k].splice(idx,1);if(!customEvents[k].length)delete customEvents[k]}saveStore();closeDayDetail();refresh()}
+function requestNotif(){if(!("Notification"in window))return alert("Notifications are not supported.");Notification.requestPermission().then(p=>{if(p==="granted"){triggerBell();checkReminders();alert("Notifications enabled. Reminders are checked while the app is running.")}else alert("Permission not granted.")})}
+let notifiedKeys=new Set();function checkReminders(){if(!("Notification"in window)||Notification.permission!=="granted")return;let n=new Date(),a=getAllEventsFor(n.getFullYear(),n.getMonth(),n.getDate());a.forEach(e=>{if(!e.time||String(e.remind)==="0")return;let [h,m]=e.time.split(":").map(Number),et=new Date(n.getFullYear(),n.getMonth(),n.getDate(),h,m),rt=new Date(et-Number(e.remind)*60000),key=e.name+e.time+e.remind+n.toDateString();if(n>=rt&&n-rt<60000&&!notifiedKeys.has(key)){notifiedKeys.add(key);new Notification(e.name,{body:"Today at "+e.time})}})}setInterval(checkReminders,30000)
+function importICS(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{let c=0;r.result.split("BEGIN:VEVENT").forEach(b=>{let m=b.match(/DTSTART[^:]*:(\d{4})(\d{2})(\d{2})/),s=(b.match(/SUMMARY:(.*)/)||[])[1];if(!m||!s)return;let k=+m[1]+"-"+(+m[2]-1)+"-"+(+m[3]-0);(customEvents[k]||(customEvents[k]=[])).push({name:s.trim(),color:"#29b6f6",time:"09:00",remind:"0",type:"imported"});c++});saveStore();refresh();closeMore();alert("Imported "+c);e.target.value=""};r.readAsText(f)}
+const FONTS=["Outfit","Poppins","Roboto","Inter","Montserrat","Nunito","Raleway","Quicksand","Comfortaa","Oswald","DM Sans","Josefin Sans","Work Sans","Rubik","Manrope","Lato","Open Sans","Kanit","Sora","Ubuntu","Playfair Display","Merriweather","Lora","Noto Serif","Dancing Script","Pacifico","Caveat","Great Vibes","Kalam","JetBrains Mono","Fira Code","Roboto Mono","Bungee","Press Start 2P","Fredoka","Baloo 2","Chewy","Luckiest Guy","Bangers","Anton","Bebas Neue","Archivo Black","Unbounded"];
+let loadedFonts=new Set();function ensureFontLoaded(n){if(loadedFonts.has(n))return;loadedFonts.add(n);let l=document.createElement("link");l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family="+encodeURIComponent(n).replace(/%20/g,"+")+":wght@400;700&display=swap";document.head.appendChild(l)}
+function renderFontList(q=""){fontList.innerHTML="";let a=FONTS.filter(n=>n.toLowerCase().includes(q.toLowerCase())).slice(0,100);a.forEach(n=>{ensureFontLoaded(n);let d=document.createElement("div");d.className="fontOption";d.style.fontFamily="'"+n+"',sans-serif";d.textContent=n;d.onclick=()=>{let css="'"+n+"',sans-serif";document.documentElement.style.setProperty("--font",css);localStorage.setItem("font",css);localStorage.setItem("fontName",n);updateFontDisplay();renderFontList(q)};fontList.appendChild(d)})}
+function updateFontDisplay(){let n=localStorage.getItem("fontName")||"Outfit";curFontName.textContent=n;curFontName.style.fontFamily=localStorage.getItem("font")||"'Outfit',sans-serif"}function renderRelDots(){relDotsList.innerHTML="";for(let k in religionColors){let d=document.createElement("div");d.className="relRow";d.innerHTML='<span class="dotSwatch" style="background:'+religionColors[k]+'"></span><span style="flex:1">'+CATLABELS[k]+"</span>›";d.onclick=()=>openColorPicker(k);relDotsList.appendChild(d)}}
+function hexToHue(x){let r=parseInt(x.slice(1,3),16)/255,g=parseInt(x.slice(3,5),16)/255,b=parseInt(x.slice(5,7),16)/255,max=Math.max(r,g,b),min=Math.min(r,g,b),h=0;if(max!==min){let d=max-min;h=(max===r?(g-b)/d+(g<b?6:0):max===g?(b-r)/d+2:(r-g)/d+4)*60}return Math.round(h)}
+function hslToHex(h,s=70,l=55){s/=100;l/=100;let c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs(h/60%2-1)),m=l-c/2,[r,g,b]=h<60?[c,x,0]:h<120?[x,c,0]:h<180?[0,c,x]:h<240?[0,x,c]:h<300?[x,0,c]:[c,0,x];return"#"+[r,g,b].map(v=>Math.round((v+m)*255).toString(16).padStart(2,"0")).join("")}
+let colorPickerTarget,colorPickerCurrentHex,colorPickerOriginalHex;function openColorPicker(t){colorPickerTarget=t;let x=t==="accent"?(localStorage.getItem("accent")||"#a78bfa"):religionColors[t];colorPickerOriginalHex=x;colorPickerCurrentHex=x;hueSlider.value=hexToHue(x);updateHuePreview(hueSlider.value);colorM.classList.add("open")}function updateHuePreview(h){colorPickerCurrentHex=hslToHex(+h);colorPreview.style.background=colorPickerCurrentHex;colorHex.textContent=colorPickerCurrentHex.toUpperCase();if(colorPickerTarget==="accent")document.documentElement.style.setProperty("--accent",colorPickerCurrentHex)}
+function closeColorPicker(c){if(c&&colorPickerTarget==="accent")document.documentElement.style.setProperty("--accent",colorPickerOriginalHex);colorM.classList.remove("open")}function confirmColorPicker(){if(colorPickerTarget==="accent"){document.documentElement.style.setProperty("--accent",colorPickerCurrentHex);localStorage.setItem("accent",colorPickerCurrentHex)}else religionColors[colorPickerTarget]=colorPickerCurrentHex;saveStore();renderRelDots();refresh();closeColorPicker(false)}
+function syncAccentSwatch(){let accent=localStorage.getItem("accent")||"#a78bfa";document.getElementById("accentSwatch").style.background=accent;}
+function toggleTheme(x){let mode=x?"light":"dark";document.body.classList.toggle("light",x);localStorage.setItem("theme",mode);updateAstro()}
+const SPACE=[["Nebula","radial-gradient(ellipse at top,#1b1030,#05050a 70%)"],["Galaxy","radial-gradient(ellipse at top,#0a1a3a,#000814 70%)"],["Aurora","radial-gradient(ellipse at top,#0a2e1f,#020a08 70%)"],["Mars","radial-gradient(ellipse at top,#3a0a0a,#0a0202 70%)"],["Cosmos","radial-gradient(ellipse at top,#3a2a0a,#0a0602 70%)"],["Pulsar","radial-gradient(ellipse at top,#3a0a2e,#0a020a 70%)"],["Ice Field","radial-gradient(ellipse at top,#0a2a3a,#020a0a 70%)"],["Void","radial-gradient(ellipse at top,#1a1a1a,#000 70%)"]];
+function renderSpaceThemes(){spaceThemeRow.innerHTML="";let cur=localStorage.getItem("spaceThemeIdx")||"0";SPACE.forEach((x,i)=>{let d=document.createElement("div");d.className="spaceSwatch"+(cur==i?" active":"");d.style.background=x[1];d.onclick=()=>{localStorage.setItem("spaceThemeIdx",i);localStorage.removeItem("customBg");applySpaceTheme();renderSpaceThemes()};spaceThemeRow.appendChild(d)});let g=document.createElement("div");g.className="galleryBtn";g.textContent="🖼️";g.onclick=()=>bgGalleryFile.click();spaceThemeRow.appendChild(g)}
+function applySpaceTheme(){let bg=localStorage.getItem("customBg");if(bg){document.body.style.backgroundImage="url("+JSON.stringify(bg)+")";document.body.classList.add("customBgActive")}else{let x=SPACE[Number(localStorage.getItem("spaceThemeIdx")||0)]||SPACE[0];document.body.style.backgroundImage=x[1];document.body.classList.remove("customBgActive")}}
+function handleGalleryFile(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{localStorage.setItem("customBg",r.result);localStorage.setItem("spaceThemeIdx","custom");applySpaceTheme();renderSpaceThemes()}catch(_){alert("Image too large to save.")}};r.readAsDataURL(f);e.target.value=""}
+
+let starsAnimId=null, starsCtx=null, stars=[];
+function stopStars(){if(starsAnimId)cancelAnimationFrame(starsAnimId);starsAnimId=null;stars=[];if(starsCtx)starsCtx.clearRect(0,0,innerWidth,innerHeight);starsCtx=null}
+function updateAstro(){if(document.body.classList.contains("light")){document.body.classList.remove("astro");document.body.style.backgroundImage="";stopStars()}else{document.body.classList.add("astro");applySpaceTheme();startStars()}}
+function loadLiveIcon(){let c=document.createElement("canvas");c.width=c.height=512;let x=c.getContext("2d"),d=new Date();x.fillStyle="#fff";x.roundRect(32,80,448,412,44);x.fill();x.fillStyle="#e63939";x.roundRect(32,80,448,120,44);x.fill();x.fillRect(32,140,448,60);x.fillStyle="#37474f";x.textAlign="center";x.font="bold 210px sans-serif";x.fillText(d.getDate(),256,440);fav.href=c.toDataURL("image/png");let manifest={name:"Calendar — Paper Studios",short_name:"Calendar",display:"standalone",theme_color:localStorage.getItem("accent")||"#a78bfa",icons:[]};let icon=localStorage.getItem("appIcon");if(icon)manifest.icons=[{src:icon,sizes:"512x512",type:"image/png"}];manifestLink.href=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:"application/json"}))}
+let pendingIcon=null;function openAppIconPicker(){iconM.classList.add("open");let x=localStorage.getItem("appIcon");iconPreview.innerHTML=x?'<img src="'+x+'" style="width:100px;height:100px;border-radius:22px">':"<div class=status>No icon selected yet.</div>"}function closeAppIconPicker(){iconM.classList.remove("open");pendingIcon=null}function previewAppIcon(e){let r=new FileReader();r.onload=()=>{pendingIcon=r.result;iconPreview.innerHTML='<img src="'+pendingIcon+'" style="width:100px;height:100px;border-radius:22px">'};r.readAsDataURL(e.target.files[0])}function saveAppIcon(){if(pendingIcon)localStorage.setItem("appIcon",pendingIcon);loadLiveIcon();closeAppIconPicker()}
+function openPrivacy(){pvEmail.textContent=FEEDBACK_EMAIL;pvStore.textContent=PLAYSTORE_URL;privacyM.classList.add("open")}function closePrivacy(){privacyM.classList.remove("open")}function sendFeedback(){location.href="mailto:"+FEEDBACK_EMAIL+"?subject=Calendar%20Feedback"}
+
+function startStars(){
+    stopStars();
+    let can = document.getElementById("stars");
+    if(!can) return;
+    can.width = innerWidth;
+    can.height = innerHeight;
+    starsCtx = can.getContext("2d");
+    stars = Array.from({length: 130}, () => ({
+        x: Math.random() * can.width,
+        y: Math.random() * can.height,
+        r: .3 + Math.random() * 1.4,
+        s: .006 + Math.random() * .02,
+        p: Math.random() * 6.28
+    }));
+    function draw(t){
+        if(!document.body.classList.contains("astro")) return;
+        starsCtx.clearRect(0, 0, can.width, can.height);
+        for(let x of stars){
+            starsCtx.beginPath();
+            starsCtx.arc(x.x, x.y, x.r, 0, Math.PI * 2);
+            starsCtx.fillStyle = "rgba(255,255,255," + (.35 + .65 * Math.abs(Math.sin(t / 1000 * x.s * 10 + x.p))) + ")";
+            starsCtx.fill();
+        }
+        starsAnimId = requestAnimationFrame(draw);
+    }
+    starsAnimId = requestAnimationFrame(draw);
+}
+
+function boot(){
+    try {
+        let f = localStorage.getItem("font");
+        if(f) document.documentElement.style.setProperty("--font", f);
+        let accent = localStorage.getItem("accent");
+        if(accent) document.documentElement.style.setProperty("--accent", accent);
+        document.body.classList.toggle("light", (localStorage.getItem("theme") || "dark") === "light");
+        if(typeof renderRelDots === "function") renderRelDots();
+        if(typeof initScroll === "function") initScroll();
+        if(typeof loadLiveIcon === "function") loadLiveIcon();
+        if(typeof updateAstro === "function") updateAstro();
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", boot);
+
+window.addEventListener("load", () => {
+    setTimeout(() => {
+        let s = document.getElementById("splash");
+        if(s) {
+            s.classList.add("hide");
+            s.style.display = "none";
+            s.remove();
+        }
+    }, 250);
+});
+
+setInterval(() => { if(typeof checkReminders === "function") checkReminders(); }, 30000);
+setInterval(() => { if(typeof loadLiveIcon === "function") loadLiveIcon(); }, 60000);
+</script></body></html>
