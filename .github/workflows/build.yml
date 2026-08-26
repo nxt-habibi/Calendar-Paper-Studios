@@ -35,6 +35,10 @@ jobs:
           PROJECT_DIR=$(dirname "$BUILD_FILE")
           echo "Building in directory: $PROJECT_DIR"
           cd "$PROJECT_DIR"
+          
+          # Remove invalid .txt placeholder files from drawable folders
+          find src/main/res/drawable* -name "*.txt" -delete || true
+          
           gradle assembleDebug
 
       - name: Upload APK Artifact
