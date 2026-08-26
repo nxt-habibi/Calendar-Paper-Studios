@@ -12,13 +12,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Extract Project Files
+      - name: Extract and Flatten Directory
         run: |
           unzip -o PaperStudiosCalendar_Android.zip
-          # If files were unzipped into a subfolder, move them to the root
-          SUBDIR=$(find . -maxdepth 2 -name "gradlew" -exec dirname {} \;)
-          if [ -n "$SUBDIR" ] && [ "$SUBDIR" != "." ]; then
-            cp -r $SUBDIR/* .
+          # Find where gradlew is located and move everything from that folder to root
+          GRADLEW_PATH=$(find . -name "gradlew" -not -path "./gradlew" | head -n 1)
+          if [ -n "$GRADLEW_PATH" ]; then
+            DIR=$(dirname "$GRADLEW_PATH")
+            cp -r $DIR/* .
           fi
 
       - name: Setup JDK 17
