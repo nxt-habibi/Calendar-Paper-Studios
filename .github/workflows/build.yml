@@ -16,30 +16,48 @@ jobs:
         run: |
           mkdir -p app/src/main/java/com/paper/calendar
           mkdir -p app/src/main/assets
-          cat > settings.gradle << 'EOF'
-          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
-          dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
-          include ':app'
-          EOF
+          echo "include ':app'" > settings.gradle
           cat > build.gradle << 'EOF'
-          plugins { id 'com.android.application' version '8.2.2' apply false }
+          buildscript {
+            repositories { google(); mavenCentral() }
+            dependencies { classpath 'com.android.tools.build:gradle:8.2.2' }
+          }
+          allprojects { repositories { google(); mavenCentral() } }
+          EOF
+          cat > app/build.gradle << 'EOF'
+          apply plugin: 'com.android.application'
+          android {
+            namespace 'com.paper.calendar'
+            compileSdkVersion 34
+            defaultConfig { applicationId "com.paper.calendar"; minSdkVersion 21; targetSdkVersion 34; versionCode 6; versionName "2.2" }
+          }
+          EOF
+          cat > app/src/main/AndroidManifest.xml << 'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.paper.calendar">
+            <uses-permission android:name="android.permission.INTERNET"/>
+            <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+            <application android:label="Calendar">
+              <activity android:name=".MainActivity" android:exported="true" android:theme="@android:style/Theme.NoTitleBar">
+                <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+              </activity>
+            </application>
+          </manifest>
           EOF
           cat > app/src/main/java/com/paper/calendar/MainActivity.java << 'EOF'
           package com.paper.calendar;
           import android.app.Activity; import android.os.Bundle; import android.webkit.*; import android.content.Intent; import android.net.Uri;
           public class MainActivity extends Activity {
-            private ValueCallback<Uri[]> cb; static final int RQ=1001;
+            ValueCallback<Uri[]> cb; final int REQ=1001;
             protected void onCreate(Bundle b){
               super.onCreate(b);
               WebView wv=new WebView(this);
               WebSettings s=wv.getSettings();
               s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setAllowFileAccess(true); s.setAllowContentAccess(true);
               s.setAllowFileAccessFromFileURLs(true); s.setAllowUniversalAccessFromFileURLs(true);
-              s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
               wv.setWebChromeClient(new WebChromeClient(){
-                public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> c, FileChooserParams p){
+                public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> c, FileChooserParams p){
                   cb=c; Intent i=new Intent(Intent.ACTION_GET_CONTENT); i.addCategory(Intent.CATEGORY_OPENABLE); i.setType("image/*");
-                  startActivityForResult(Intent.createChooser(i,"Gallery"),RQ); return true;
+                  startActivityForResult(Intent.createChooser(i,"Gallery"),REQ); return true;
                 }
               });
               wv.setWebViewClient(new WebViewClient());
@@ -47,26 +65,14 @@ jobs:
               wv.loadUrl("file:///android_asset/index.html");
             }
             protected void onActivityResult(int rc,int res,Intent d){
-              if(rc==RQ && cb!=null){ cb.onReceiveValue(FileChooserParams.parseResult(res,d)); cb=null; }
+              if(rc==REQ && cb!=null){ cb.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(res,d)); cb=null; }
               super.onActivityResult(rc,res,d);
             }
           }
-          EOF
-          cat > app/src/main/AndroidManifest.xml << 'EOF'
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.paper.calendar">
-            <uses-permission android:name="android.permission.INTERNET"/>
-            <application android:label="Calendar" android:usesCleartextTraffic="true">
-              <activity android:name=".MainActivity" android:exported="true" android:theme="@android:style/Theme.NoTitleBar"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
-            </application>
-          </manifest>
-          EOF
-          cat > app/build.gradle << 'EOF'
-          plugins { id 'com.android.application' }
-          android { namespace 'com.paper.calendar'; compileSdk 34; defaultConfig { applicationId "com.paper.calendar"; minSdk 21; targetSdk 34; versionCode 4; versionName "2.0" } }
           EOF
           cp index.html app/src/main/assets/index.html
       - run: gradle assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: Calendar-PRO-Fixed
+          name: Calendar-PRO
           path: app/build/outputs/apk/debug/app-debug.apk
